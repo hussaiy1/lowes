@@ -1,5 +1,7 @@
 import requests
 import json
+import threading
+import os
 
 
 headers={
@@ -17,23 +19,42 @@ headers={
     'Host': 'www.lowes.com'
 }
 
+if os.path.exists('testData.csv'):
+    os.remove('testData.csv')
+else:
+    pass
+
+
 storeId = []
 
 with open('store_id.txt', 'r') as f:
     for line in f:
+        line = line.replace('\n', '')
         storeId.append(line)
     f.close()
 
-print(len(storeId))
+productid = ['1000967']
 
-productid = ['1000672643']
+#for i in range(len(storeId)):
 
-for i in range(len(storeId)):
-    storeid = storeId[i].replace('\n','')
+def getPrice(store):
     client = requests.Session()
-    url = 'https://www.lowes.com/pd/1000672643/productdetail/{}/Guest'.format(storeid)
-    r =requests.get(url, headers=headers)
+    url = 'https://www.lowes.com/pd/1000967/productdetail/{}/Guest'.format(store)
+    r =client.get(url, headers=headers)
     print(url)
     productData = json.loads(r.text)
-    print(productData['productDetails']['1000672643']['price'])
+    price = productData['productDetails'][productid[0]]['price']
+    title = productData['productDetails'][productid[0]]['product']['title']
+    with open('testData.csv','a') as f:
+        f.write('{} | {} | {} \n'.format(store, title, price))
+        f.close()
 
+with open('testData.csv', 'w') as f:
+    f.write('Store | Title | Price \n')
+    f.close()
+
+for i in range(len(storeId)):
+    getPrice(storeId[i])
+
+#STORE INFO:
+#https://www.lowesforpros.com/wcs/resources/store/10151/storelocation/v1_0?maxResults=1&query=1055
