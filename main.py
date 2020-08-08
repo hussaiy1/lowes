@@ -33,30 +33,38 @@ with open('store_id.txt', 'r') as f:
         storeId.append(line)
     f.close()
 
-productid = ['1000967']
+productid = []
 
-#for i in range(len(storeId)):
+with open('links.txt', 'r') as f:
+    for link in f:
+        productid.append(link)
 
-def getPrice(store):
+
+
+def getPrice(product, store):
     client = requests.Session()
-    url = 'https://www.lowes.com/pd/1000967/productdetail/{}/Guest'.format(store)
+    url = 'https://www.lowes.com/pd/{}/productdetail/{}/Guest'.format(product, store)
     r =client.get(url, headers=headers)
     
     productData = json.loads(r.text)
-    price = productData['productDetails'][productid[0]]['price']
-    title = productData['productDetails'][productid[0]]['product']['title']
-
+    pricing = productData['productDetails'][product]['price']
+    title = productData['productDetails'][product]['product']['title']
     print('{} - {}'.format(store, title))
-    with open('testData.csv','a') as f:
-        f.write('{} | {} | {} \n'.format(store, title, price))
-        f.close()
+    if pricing != None:
+        price = pricing['itemPrice']
+    else:
+        print('{} - {} - {}'.format(store, title, pricing))
+        with open('testData.csv','a') as f:
+            f.write('{} | {} | {} \n'.format(store, title, price))
+            f.close()
 
 with open('testData.csv', 'w') as f:
     f.write('Store | Title | Price \n')
     f.close()
 
 for i in range(len(storeId)):
-    getPrice(storeId[i])
+    for j in range(len(productid)):
+        getPrice(productid[j], storeId[i])
 
 #STORE INFO:
 #https://www.lowesforpros.com/wcs/resources/store/10151/storelocation/v1_0?maxResults=1&query=1055
