@@ -41,10 +41,12 @@ def getPrice(store):
     client = requests.Session()
     url = 'https://www.lowes.com/pd/1000967/productdetail/{}/Guest'.format(store)
     r =client.get(url, headers=headers)
-    print(url)
+    
     productData = json.loads(r.text)
     price = productData['productDetails'][productid[0]]['price']
     title = productData['productDetails'][productid[0]]['product']['title']
+
+    print('{} - {}'.format(store, title))
     with open('testData.csv','a') as f:
         f.write('{} | {} | {} \n'.format(store, title, price))
         f.close()
