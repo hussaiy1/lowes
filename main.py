@@ -37,6 +37,7 @@ productid = []
 
 with open('links.txt', 'r') as f:
     for link in f:
+        link = link.replace('\n', '')
         productid.append(link)
 
 
@@ -45,18 +46,20 @@ def getPrice(product, store):
     client = requests.Session()
     url = 'https://www.lowes.com/pd/{}/productdetail/{}/Guest'.format(product, store)
     r =client.get(url, headers=headers)
-    
     productData = json.loads(r.text)
     pricing = productData['productDetails'][product]['price']
     title = productData['productDetails'][product]['product']['title']
     print('{} - {}'.format(store, title))
     if pricing != None:
         price = pricing['itemPrice']
+        print('{} - {} - {}'.format(store, title))
     else:
-        print('{} - {} - {}'.format(store, title, pricing))
-        with open('testData.csv','a') as f:
-            f.write('{} | {} | {} \n'.format(store, title, price))
-            f.close()
+        price = '-'
+        print('{} - {}'.format(store, title))
+
+    with open('testData.csv','a') as f:
+        f.write('{} | {} | {} \n'.format(store, title, price))
+        f.close()
 
 with open('testData.csv', 'w') as f:
     f.write('Store | Title | Price \n')
