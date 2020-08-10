@@ -1,6 +1,5 @@
 import requests
 import json
-import threading
 import os
 
 
