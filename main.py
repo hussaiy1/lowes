@@ -35,7 +35,7 @@ with open('store_id.txt', 'r') as f:
 
 productid = []
 
-with open('links.txt', 'r') as f:
+with open('prodid.txt', 'r') as f:
     for link in f:
         link = link.replace('\n', '')
         productid.append(link)
@@ -49,10 +49,9 @@ def getPrice(product, store):
     productData = json.loads(r.text)
     pricing = productData['productDetails'][product]['price']
     title = productData['productDetails'][product]['product']['title']
-    print('{} - {}'.format(store, title))
     if pricing != None:
         price = pricing['itemPrice']
-        print('{} - {} - {}'.format(store, title))
+        print('{} - {}'.format(store, title))
     else:
         price = '-'
         print('{} - {}'.format(store, title))
