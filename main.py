@@ -57,6 +57,11 @@ def loadProxyUserPass():
                        'https': 'http://' + tmp[2] + ':' + tmp[3] + '@' + tmp[0] + ':' + tmp[1] + '/'}
             proxyList.append(proxies)
 
+def excelWrite(store, title, price):
+        with open('testData.csv', 'a') as f:
+            f.write('{} | {} | {} \n'.format(store, title, price))
+        
+
 
 def response(product, store):
     client = requests.Session()
@@ -75,34 +80,44 @@ def getPrice(r, product, store):
     else:
         price = '-'
         print('{} - {}'.format(store, title))
-    return price
 
+    excelWrite(store, title, price)
+
+
+with open('testData.csv', 'w') as f:
+    f.write('Store | Title | Price \n')
+        
 
 
 loadProxyUserPass()
-print(proxyList)
-
 threads = []
-x=0
+
 
 if len(storeId)%100 != 0:
     maxVal = math.ceil(len(storeId)/100)
 else:
     maxVal = len(storeId)/100
 
+x = 0
 while x<maxVal:
     for i in range(0,100):
         for j in range(len(productid)):
-            storeId = storeId[(x*100):(x+1)*100]
-            getPrice(response(productid[j], storeId[i]), productid[j], storeId[i])
-            t = threading.Thread(target=getPrice, args=(response(productid[j], storeId[i]), productid[j], storeId[i],))
+            storeId_2 = storeId[(x*100):(x+1)*100]
+            if len(storeId_2)==0:
+                exit()
+            t = threading.Thread(target=getPrice, args=(response(productid[j], storeId_2[i]), productid[j], storeId[i],))
             threads.append(t)
             t.start()
+        
 
     for one_thread in threads:
         one_thread.join()
-    x+=1
+    x += 1
+    
 
+
+
+#index error
 #def getPrice(product, store):
 #    #client = requests.Session()
 #    #url = 'https://www.lowes.com/pd/{}/productdetail/{}/Guest'.format(product, store)
