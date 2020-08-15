@@ -1,7 +1,9 @@
 import requests
 import json
 import os
-
+import threading
+import math
+import random
 
 headers={
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.38 Safari/537.36',
@@ -25,6 +27,7 @@ else:
 
 
 storeId = []
+productid = []
 
 with open('store_id.txt', 'r') as f:
     for line in f:
@@ -32,19 +35,37 @@ with open('store_id.txt', 'r') as f:
         storeId.append(line)
     f.close()
 
-productid = []
-
 with open('prodid.txt', 'r') as f:
     for link in f:
         link = link.replace('\n', '')
         productid.append(link)
 
+total_tasks = len(productid) * len(storeId)
+
+proxyList=[]
+
+def loadProxyUserPass():
+    global proxyList
+    with open('proxies.txt') as f:
+        file_content = f.read()
+    file_rows = file_content.split('\n')
+    for i in range(0, len(file_rows)):
+        if ':' in file_rows[i]:
+            tmp = file_rows[i]
+            tmp = tmp.split(':')
+            proxies = {'http': 'http://' + tmp[2] + ':' + tmp[3] + '@' + tmp[0] + ':' + tmp[1] + '/',
+                       'https': 'http://' + tmp[2] + ':' + tmp[3] + '@' + tmp[0] + ':' + tmp[1] + '/'}
+            proxyList.append(proxies)
 
 
-def getPrice(product, store):
+def response(product, store):
     client = requests.Session()
+    client.proxies = random.choice(proxyList)
     url = 'https://www.lowes.com/pd/{}/productdetail/{}/Guest'.format(product, store)
     r =client.get(url, headers=headers)
+    return r
+
+def getPrice(r, product, store):
     productData = json.loads(r.text)
     pricing = productData['productDetails'][product]['price']
     title = productData['productDetails'][product]['product']['title']
@@ -54,18 +75,61 @@ def getPrice(product, store):
     else:
         price = '-'
         print('{} - {}'.format(store, title))
+    return price
 
-    with open('testData.csv','a') as f:
-        f.write('{} | {} | {} \n'.format(store, title, price))
-        f.close()
 
-with open('testData.csv', 'w') as f:
-    f.write('Store | Title | Price \n')
-    f.close()
 
-for i in range(len(storeId)):
-    for j in range(len(productid)):
-        getPrice(productid[j], storeId[i])
+loadProxyUserPass()
+print(proxyList)
 
+threads = []
+x=0
+
+if len(storeId)%100 != 0:
+    maxVal = math.ceil(len(storeId)/100)
+else:
+    maxVal = len(storeId)/100
+
+while x<maxVal:
+    for i in range(0,100):
+        for j in range(len(productid)):
+            storeId = storeId[(x*100):(x+1)*100]
+            getPrice(response(productid[j], storeId[i]), productid[j], storeId[i])
+            t = threading.Thread(target=getPrice, args=(response(productid[j], storeId[i]), productid[j], storeId[i],))
+            threads.append(t)
+            t.start()
+
+    for one_thread in threads:
+        one_thread.join()
+    x+=1
+
+#def getPrice(product, store):
+#    #client = requests.Session()
+#    #url = 'https://www.lowes.com/pd/{}/productdetail/{}/Guest'.format(product, store)
+#    #r =client.get(url, headers=headers)
+#    productData = json.loads(r.text)
+#    pricing = productData['productDetails'][product]['price']
+#    title = productData['productDetails'][product]['product']['title']
+#    if pricing != None:
+#        price = pricing['itemPrice']
+#        print('{} - {}'.format(store, title))
+#    else:
+#        price = '-'
+#        print('{} - {}'.format(store, title))
+#
+#    with open('testData.csv','a') as f:
+#        f.write('{} | {} | {} \n'.format(store, title, price))
+#        f.close()
+#
+#with open('testData.csv', 'w') as f:
+#    f.write('Store | Title | Price \n')
+#    f.close()
+
+
+
+#for i in range(len(storeId)):
+#    for j in range(len(productid)):
+#        getPrice(productid[j], storeId[i])
+#
 #STORE INFO:
 #https://www.lowesforpros.com/wcs/resources/store/10151/storelocation/v1_0?maxResults=1&query=1055
