@@ -104,14 +104,11 @@ while x<maxVal:
         for j in range(len(productid)):
             storeId_2 = storeId[(x*100):(x+1)*100]
             if len(storeId_2)==0:
-                exit()
-            t = threading.Thread(target=getPrice, args=(response(productid[j], storeId_2[i]), productid[j], storeId[i],))
-            threads.append(t)
-            t.start()
-        
-
-    for one_thread in threads:
-        one_thread.join()
+                pass
+            else:
+                t = threading.Thread(target=getPrice, args=(response(productid[j], storeId_2[i]), productid[j], storeId[i],))
+                t.start()
+                t.join()
     x += 1
     
 
