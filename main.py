@@ -108,6 +108,7 @@ while x<=maxVal:
                 exit()
             else:
                 t = threading.Thread(target=getPrice, args=(response(productid[j], storeId_2[i]), productid[j], storeId_2[i],))
+                print(x)
                 t.start()
                 t.join()
     x += 1
