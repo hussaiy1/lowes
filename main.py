@@ -112,7 +112,7 @@ while x<=maxVal/2 and y<=maxVal:
                 try:
                     t0 = threading.Thread(target=getPrice, args=(response(productid[j], storeId_2[(2*i)+1]), productid[j], storeId_2[(2*i)+1],))
                     t1 = threading.Thread(target=getPrice, args=(response(productid[j], storeId_2[(2*i)]), productid[j], storeId_2[(2*i)],))
-                    t2 = threading.Thread(target=getPrice, args=(response(productid[j], storeId_3[(2*i)]), productid[j], storeId_3[(2*i)],))
+                    t2 = threading.Thread(target=getPrice, args=(response(productid[j], storeId_3[(2*i)+1]), productid[j], storeId_3[(2*i)+1],))
                     t3 = threading.Thread(target=getPrice, args=(response(productid[j], storeId_3[(2*i)]), productid[j], storeId_3[(2*i)],))
                     t0.start()
                     t1.start()
