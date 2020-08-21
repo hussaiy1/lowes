@@ -60,13 +60,8 @@ with open('prodid.txt', 'r') as f:
         link = link.replace('\n', '')
         productid.append(link)
 
-#def response(product, store):
-#    client = requests.Session()
-#    url = 'https://www.lowes.com/pd/{}/productdetail/{}/Guest'.format(product, store)
-#    r =client.get(url, headers=headers)
-#    return r
-
 urlList = []
+retryUrl = []
 
 for i in range(len(storeId)):
     for j in range(len(productid)):
@@ -81,34 +76,43 @@ def excelWrite(product, wasPrice, price, priceType, availabilityQuantity, store,
             f.write('{}||{}|{}|||{}|{}|{}|{}|{} \n'.format(product, wasPrice, price, priceType, availabilityQuantity, store, link, title))
             f.close()
 
+def prodData(data, link):
+    if data != None:
+        urlSplit = link.split('/')
+        product = urlSplit[4]
+        store = urlSplit[6]
+        pricing = data['productDetails'][product]['price']
+        title = data['productDetails'][product]['product']['title']
+        url = 'https://www.lowes.com' + data['productDetails'][product]['product']['pdURL']
+        if pricing != None:
+            price = pricing['itemPrice']
+            wasPrice = pricing['wasPrice']
+            priceType = pricing['displayType']
+            availabilityQuantity = data['inventory']['totalAvailableQty']
+            print('{} - {}'.format(store, title))
+            csvList.append('{}||{}|{}|||{}|{}|{}|{}|{} \n'.format(product, wasPrice, price, priceType, availabilityQuantity, store, url, title))
+        else:
+            price = '-'
+            wasPrice = '-'
+            priceType = '-'
+            availabilityQuantity = 'Out Of Stock'
+            csvList.append('{}||{}|{}|||{}|{}|{}|{}|{} \n'.format(product, wasPrice, price, priceType, availabilityQuantity, store, url, title))
+            print('{} - {}'.format(store, title))
+
 def getPrice(link):
     try:
-        r = client.get(link, headers=headers)
+        r = client.get(link, headers=headers, proxies=random.choice(proxyList))
+        productData = json.loads(r.text)
+        prodData(productData, link)
     except requests.exceptions.ProxyError:
-        print('Proxy Error - Rotating Proxy')
-        client.proxies = random.choice(proxyList)
-        r = client.get(link, headers=headers)
-    productData = json.loads(r.text)
-    urlSplit = link.split('/')
-    product = urlSplit[4]
-    store = urlSplit[6]
-    pricing = productData['productDetails'][product]['price']
-    title = productData['productDetails'][product]['product']['title']
-    url = 'https://www.lowes.com' + productData['productDetails'][product]['product']['pdURL']
-    if pricing != None:
-        price = pricing['itemPrice']
-        wasPrice = pricing['wasPrice']
-        priceType = pricing['displayType']
-        availabilityQuantity = productData['inventory']['totalAvailableQty']
-        print('{} - {}'.format(store, title))
-        csvList.append('{}||{}|{}|||{}|{}|{}|{}|{} \n'.format(product, wasPrice, price, priceType, availabilityQuantity, store, url, title))
-    else:
-        price = '-'
-        wasPrice = '-'
-        priceType = '-'
-        availabilityQuantity = 'Out Of Stock'
-        csvList.append('{}||{}|{}|||{}|{}|{}|{}|{} \n'.format(product, wasPrice, price, priceType, availabilityQuantity, store, url, title))
-        print('{} - {}'.format(store, title))
+        try :
+            print('Proxy Error - Rotating Proxy')
+            r = client.get(link, headers=headers, proxies=random.choice(proxyList))
+            productData = json.loads(r.text)
+            prodData(productData, link)
+        except requests.exceptions.ProxyError:
+            print('Proxy Error - save for later')
+            retryUrl.append(link)
 
 
 with open('Data.csv', 'w') as f:
@@ -119,14 +123,13 @@ with open('Data.csv', 'w') as f:
 loadProxyUserPass()
 
 threads=[]
-client = requests.Session()
 
 for k in range(len(urlList)):
-    client.proxies = random.choice(proxyList)
+    client = requests.Session()
     p1 = threading.Thread(target=getPrice, args=(urlList[k],))
 
     while threading.active_count() > 100:
-        time.sleep(10)
+        time.sleep(60)
     p1.start()
     threads.append(p1)
 for thread in threads:
@@ -135,3 +138,8 @@ for thread in threads:
 for line in csvList:
     with open('data.csv','a') as f:
         f.write(line)
+
+print(len(retryUrl))
+
+
+#OpenSSL.SSL.Error: [('system library', 'fopen', 'Too many open files'), ('BIO routines', 'BIO_new_file', 'system lib'), ('x509 certificate routines', 'X509_load_cert_crl_file', 'system lib')]
