@@ -128,8 +128,8 @@ for k in range(len(urlList)):
     client = requests.Session()
     p1 = threading.Thread(target=getPrice, args=(urlList[k],))
 
-    while threading.active_count() > 100:
-        time.sleep(25)
+    while threading.active_count() > 200:
+        time.sleep(15)
     p1.start()
     threads.append(p1)
 for thread in threads:
@@ -142,7 +142,7 @@ for j in range(len(retryUrl)):
     p1 = threading.Thread(target=getPrice, args=(retryUrl[j],))
 
     while threading.active_count() > 200:
-        time.sleep(25)
+        time.sleep(15)
     p1.start()
     threads.append(p1)
 
