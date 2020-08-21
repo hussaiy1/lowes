@@ -129,17 +129,28 @@ for k in range(len(urlList)):
     p1 = threading.Thread(target=getPrice, args=(urlList[k],))
 
     while threading.active_count() > 100:
-        time.sleep(60)
+        time.sleep(25)
     p1.start()
     threads.append(p1)
+for thread in threads:
+    thread.join()
+
+threads = []
+
+for j in range(len(retryUrl)):
+    client = requests.Session()
+    p1 = threading.Thread(target=getPrice, args=(retryUrl[j],))
+
+    while threading.active_count() > 200:
+        time.sleep(25)
+    p1.start()
+    threads.append(p1)
+
 for thread in threads:
     thread.join()
 
 for line in csvList:
     with open('data.csv','a') as f:
         f.write(line)
-
-print(len(retryUrl))
-
 
 #OpenSSL.SSL.Error: [('system library', 'fopen', 'Too many open files'), ('BIO routines', 'BIO_new_file', 'system lib'), ('x509 certificate routines', 'X509_load_cert_crl_file', 'system lib')]
